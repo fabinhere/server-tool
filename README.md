@@ -6,19 +6,62 @@ A collection of server setup and automation scripts.
 
 ## Scripts
 
-### `install_docker_rootless.sh`
+### `install_docker.sh` — Recommended
 
-Installs **Docker (rootless mode)** and **Docker Compose v2** without requiring root for the Docker daemon itself. Only prerequisite package installation needs a one-time `sudo`.
+Installs **Docker Engine** and **Docker Compose v2** using the [official Docker convenience script](https://get.docker.com). This is the standard documented approach: Docker daemon runs as root, your user is added to the `docker` group so you can run `docker` without `sudo`.
 
 #### What it does
 
-1. Detects your OS, distro, and architecture automatically
-2. Installs system prerequisites via the native package manager
-3. Configures `subuid`/`subgid` for your user (required for rootless namespacing)
-4. Runs the official Docker rootless installer (`get.docker.com/rootless`)
-5. Appends `PATH` and `DOCKER_HOST` to `~/.bashrc` (idempotent — safe to re-run)
-6. Enables and starts the Docker systemd user service (if systemd is available)
-7. Downloads and installs the latest Docker Compose v2 CLI plugin to `~/.docker/cli-plugins/`
+1. Runs the official `get.docker.com` installer
+2. Adds your user to the `docker` group
+3. Enables and starts the Docker systemd service
+4. Verifies the installation with `hello-world`
+
+#### Requirements
+
+- Linux
+- `sudo` access
+- `curl`
+- Internet access
+
+#### Usage
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/fabinhere/server-tool/main/install_docker.sh | bash
+```
+
+Or clone and run locally:
+
+```bash
+git clone https://github.com/fabinhere/server-tool.git
+cd server-tool
+chmod +x install_docker.sh
+./install_docker.sh
+```
+
+After the script completes, start a new shell session (or run `newgrp docker`) to use `docker` without `sudo`:
+
+```bash
+docker run --rm hello-world
+docker compose version
+```
+
+---
+
+### `install_docker_rootless.sh` — Advanced
+
+Installs Docker in **rootless mode** where the Docker daemon itself runs as your user — no root daemon at all. Useful for hardened environments where running a root-owned daemon is not acceptable.
+
+> **Note:** Rootless mode requires kernel support for user namespaces and `nf_tables`. If your kernel/distro does not have these, use `install_docker.sh` instead.
+
+#### What it does
+
+1. Installs system prerequisites via the native package manager (`apt`, `dnf`, `yum`, `pacman`, `zypper`, `apk`)
+2. Configures `subuid`/`subgid` for your user
+3. Runs the official Docker rootless installer (`get.docker.com/rootless`)
+4. Appends `PATH` and `DOCKER_HOST` to `~/.bashrc` (idempotent — safe to re-run)
+5. Enables the Docker systemd user service
+6. Installs the latest Docker Compose v2 CLI plugin to `~/.docker/cli-plugins/`
 
 #### Supported distros
 
@@ -35,32 +78,16 @@ Installs **Docker (rootless mode)** and **Docker Compose v2** without requiring 
 
 `x86_64` / `aarch64` / `armv7`
 
-#### Requirements
-
-- Linux only
-- Regular user account (not root)
-- Internet access
-- `sudo` available for prerequisite installation
-
 #### Usage
+
+> **Do not prefix with `sudo`** — the script calls `sudo` internally where needed.
+> **Do not use `| sh`** — use `| bash`. The shebang is ignored when piping, and `sh` (dash) does not support `pipefail`.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/fabinhere/server-tool/main/install_docker_rootless.sh | bash
 ```
 
-Or clone and run locally:
-
-```bash
-git clone https://github.com/fabinhere/server-tool.git
-cd server-tool
-chmod +x install_docker_rootless.sh
-./install_docker_rootless.sh
-```
-
-> **Do not prefix with `sudo`** — the script invokes `sudo` internally only where needed. Running as root defeats the purpose of rootless Docker.
-> **Do not use `| sh`** — use `| bash`. The shebang is ignored when piping, and `sh` (dash) does not support `pipefail`.
-
-After the script completes, open a new shell (or `source ~/.bashrc`) to pick up the environment variables, then verify:
+After install, open a new shell or run `source ~/.bashrc`, then verify:
 
 ```bash
 docker info
@@ -74,12 +101,3 @@ docker run --rm hello-world
 export PATH="$HOME/bin:$PATH"
 export DOCKER_HOST=unix:///run/user/<uid>/docker.sock
 ```
-
-#### Notes
-
-- Re-running the script is safe — the `~/.bashrc` block is only written once.
-- If systemd user sessions are not available (e.g. minimal containers), start the daemon manually:
-  ```bash
-  dockerd-rootless.sh &
-  ```
-- `loginctl enable-linger` is called automatically so the Docker daemon persists across logouts.
