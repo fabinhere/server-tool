@@ -8,14 +8,18 @@ A collection of server setup and automation scripts.
 
 ### `install_docker.sh`
 
-Installs **Docker Engine** and **Docker Compose v2** using the [official Docker convenience script](https://get.docker.com). Docker daemon runs as root, your user is added to the `docker` group so you can run `docker` without `sudo`.
+Installs **Docker Engine** and **Docker Compose v2** via the [official Docker convenience script](https://get.docker.com), and/or configures the current user to run `docker` without `sudo`.
 
-#### What it does
+#### Modes
 
-1. Runs the official `get.docker.com` installer
-2. Adds your user to the `docker` group
-3. Enables and starts the Docker systemd service
-4. Verifies the installation with `hello-world`
+| Flag | Behavior |
+|---|---|
+| `--install` | Install Docker Engine + Compose v2 only (do not modify groups). |
+| `--no-sudo` | Add current user to the `docker` group (assumes Docker is already installed). |
+| `--all` | Install Docker **and** configure passwordless usage. *(default)* |
+| `-h`, `--help` | Show help. |
+
+If no flag is passed and a terminal is attached, the script prompts you to pick a mode interactively. When piped (no TTY), it defaults to `--all`.
 
 #### Requirements
 
@@ -26,17 +30,29 @@ Installs **Docker Engine** and **Docker Compose v2** using the [official Docker 
 
 #### Usage
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/fabinhere/server-tool/main/install_docker.sh | bash
-```
-
-Or clone and run locally:
+Interactive (prompts for mode):
 
 ```bash
 git clone https://github.com/fabinhere/server-tool.git
 cd server-tool
 chmod +x install_docker.sh
 ./install_docker.sh
+```
+
+One-liner (defaults to `--all`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/fabinhere/server-tool/main/install_docker.sh | bash
+```
+
+Pick a specific mode:
+
+```bash
+# Install only
+curl -fsSL https://raw.githubusercontent.com/fabinhere/server-tool/main/install_docker.sh | bash -s -- --install
+
+# Configure passwordless docker on a host where Docker is already installed
+curl -fsSL https://raw.githubusercontent.com/fabinhere/server-tool/main/install_docker.sh | bash -s -- --no-sudo
 ```
 
 After the script completes, start a new shell session (or run `newgrp docker`) to use `docker` without `sudo`:
