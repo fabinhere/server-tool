@@ -45,7 +45,7 @@ Installs **Docker (rootless mode)** and **Docker Compose v2** without requiring 
 #### Usage
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/fabinhere/server-tool/main/install_docker_rootless.sh | sh
+curl -fsSL https://raw.githubusercontent.com/fabinhere/server-tool/main/install_docker_rootless.sh | bash
 ```
 
 Or clone and run locally:
@@ -56,6 +56,9 @@ cd server-tool
 chmod +x install_docker_rootless.sh
 ./install_docker_rootless.sh
 ```
+
+> **Do not prefix with `sudo`** — the script invokes `sudo` internally only where needed. Running as root defeats the purpose of rootless Docker.
+> **Do not use `| sh`** — use `| bash`. The shebang is ignored when piping, and `sh` (dash) does not support `pipefail`.
 
 After the script completes, open a new shell (or `source ~/.bashrc`) to pick up the environment variables, then verify:
 
