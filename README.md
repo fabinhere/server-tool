@@ -19,7 +19,7 @@ Installs **Docker Engine** and **Docker Compose v2** via the [official Docker co
 | `--all` | Install Docker **and** configure passwordless usage. *(default)* |
 | `-h`, `--help` | Show help. |
 
-If no flag is passed and a terminal is attached, the script prompts you to pick a mode interactively. When piped (no TTY), it defaults to `--all`.
+If no flag is passed, the script prompts you interactively to pick a mode — this works both when run locally and when piped through `curl ... | bash` (the prompt reads from `/dev/tty`). If no terminal is available at all (e.g. fully non-interactive automation), it defaults to `--all`.
 
 #### Requirements
 

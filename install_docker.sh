@@ -116,13 +116,23 @@ verify() {
 # Mode selection
 ############################################
 prompt_mode() {
+  # Read from /dev/tty so the prompt works even when the script is piped
+  # (e.g. `curl ... | bash`), where stdin is the pipe rather than the terminal.
+  if [ ! -e /dev/tty ]; then
+    log "No /dev/tty available; defaulting to: install + passwordless"
+    MODE="all"
+    return
+  fi
+
   echo
   echo "What would you like to do?"
-  echo "  1) Install Docker Engine + Compose v2 (default)"
+  echo "  1) Install Docker Engine + Compose v2"
   echo "  2) Configure current user to run docker without sudo"
-  echo "  3) Both — install AND configure passwordless usage"
+  echo "  3) Both — install AND configure passwordless usage (default)"
   echo
-  read -r -p "Enter choice [1-3] (default: 3): " choice
+  printf "Enter choice [1-3] (default: 3): "
+  local choice
+  read -r choice </dev/tty || choice=""
   case "${choice:-3}" in
     1) MODE="install" ;;
     2) MODE="no-sudo" ;;
@@ -147,12 +157,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$MODE" ]; then
-  if [ -t 0 ]; then
-    prompt_mode
-  else
-    log "No TTY detected; defaulting to --all"
-    MODE="all"
-  fi
+  prompt_mode
 fi
 
 log "Mode: $MODE"
